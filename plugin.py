@@ -1068,11 +1068,14 @@ class Bantracker(callbacks.Plugin):
         if id is None and not self.registryValue('enabled', channel):
             return
         if id is None:
-            data = self.db_run("SELECT MAX(id) FROM bans where channel=%s and mask=%s", (channel, mask), expect_result=True)
+            data = self.db_run("SELECT id FROM bans where channel=%s and mask=%s and removal is NULL", 
+                               (channel, mask), expect_result=True)
         else:
             data = [[id]]
-        if data and len(data) and not (data[0][0] == None):
-            self.db_run("UPDATE bans SET removal=%s , removal_op=%s WHERE id=%s", (now(), nick, int(data[0][0])))
+        if data and len(data):
+            for record in data:
+                if record[0] is not None:
+                    self.db_run("UPDATE bans SET removal=%s , removal_op=%s WHERE id=%s", (now(), nick, int(record[0])))
         if not channel in self.bans:
             self.bans[channel] = []
         for idx, ban in enumerateReversed(self.bans[channel]):
